@@ -1,6 +1,7 @@
 #![allow(clippy::integer_arithmetic)]
 use {
     crate::bigtable::RowKey,
+    crate::access_token::CredentialInput,
     log::*,
     serde::{Deserialize, Serialize},
     solana_metrics::inc_new_counter_debug,
@@ -368,7 +369,7 @@ pub const DEFAULT_INSTANCE_NAME: &str = "solana-ledger";
 pub struct LedgerStorageConfig {
     pub read_only: bool,
     pub timeout: Option<std::time::Duration>,
-    pub credential_path: Option<String>,
+    pub credential: Option<CredentialInput>,
     pub instance_name: String,
 }
 
@@ -377,7 +378,7 @@ impl Default for LedgerStorageConfig {
         Self {
             read_only: true,
             timeout: None,
-            credential_path: None,
+            credential: None,
             instance_name: DEFAULT_INSTANCE_NAME.to_string(),
         }
     }
@@ -397,7 +398,7 @@ impl LedgerStorage {
         Self::new_with_config(LedgerStorageConfig {
             read_only,
             timeout,
-            credential_path,
+            credential,
             ..LedgerStorageConfig::default()
         })
         .await
@@ -407,9 +408,10 @@ impl LedgerStorage {
         let LedgerStorageConfig {
             read_only,
             timeout,
-            credential_path,
+            credential,
             instance_name,
         } = config;
+
         let connection = bigtable::BigTableConnection::new(
             instance_name.as_str(),
             read_only,

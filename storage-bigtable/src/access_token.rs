@@ -16,7 +16,28 @@ use {
     },
 };
 
+pub enum CredentialInputType {
+    CredentialFilepath,
+    StringifiedCredential,
+}
+
+#[derive(Debug)]
+pub struct CredentialInput {
+    input_type: CredentialInputType,
+    string_value: Option<String>,
+}
 fn load_credentials(filepath: Option<String>) -> Result<Credentials, String> {
+    let path = match filepath {
+        Some(f) => f,
+        None => std::env::var("GOOGLE_APPLICATION_CREDENTIALS").map_err(|_| {
+            "GOOGLE_APPLICATION_CREDENTIALS environment variable not found".to_string()
+        })?,
+    };
+    Credentials::from_file(&path)
+        .map_err(|err| format!("Failed to read GCP credentials from {}: {}", path, err))
+}
+
+fn load_stringified_credentials(filepath: Option<String>) -> Result<Credentials, String> {
     let path = match filepath {
         Some(f) => f,
         None => std::env::var("GOOGLE_APPLICATION_CREDENTIALS").map_err(|_| {
@@ -36,8 +57,33 @@ pub struct AccessToken {
 }
 
 impl AccessToken {
-    pub async fn new(scope: Scope, credential_filepath: Option<String>) -> Result<Self, String> {
-        let credentials = load_credentials(credential_filepath)?;
+    pub async fn new(scope: Scope, file_path: Option<String>) -> Result<Self, String> {
+        let credentials = load_credentials(file_path)?;
+        if let Err(err) = credentials.rsa_key() {
+            Err(format!("Invalid rsa key: {}", err))
+        } else {
+            let token = Arc::new(RwLock::new(Self::get_token(&credentials, &scope).await?));
+            let access_token = Self {
+                credentials,
+                scope,
+                token,
+                refresh_active: Arc::new(AtomicBool::new(false)),
+            };
+            Ok(access_token)
+        }
+    }
+
+    pub async fn a_new(scope: Scope, credential: Option<CredentialInput>) -> Result<Self, String> {
+        let credentials = match credential {
+            Some(c) => match c.input_type {
+                CredentialInputType::CredentialFilepath => load_credentials(c.string_value)?,
+                CredentialInputType::StringifiedCredential => {
+                    load_stringified_credentials(c.string_value)?
+                }
+            },
+            None => return Err(format!("{}", "no GCP credential provided")),
+        };
+
         if let Err(err) = credentials.rsa_key() {
             Err(format!("Invalid rsa key: {}", err))
         } else {
