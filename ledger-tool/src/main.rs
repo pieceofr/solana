@@ -1081,6 +1081,14 @@ fn main() {
                        currently only available for bigtable subcommands"),
         )
         .arg(
+            Arg::with_name("stringified-google-credential")
+                .long("stringified-google-credential")
+                .value_name("CREDENTIAL")
+                .takes_value(true)
+                .global(true)
+                .help("Use stringified google credential instead of a default credential filepath"),
+        )
+        .arg(
             Arg::with_name("verbose")
                 .short("v")
                 .long("verbose")
@@ -1665,6 +1673,7 @@ fn main() {
     info!("{} {}", crate_name!(), solana_version::version!());
 
     let ledger_path = parse_ledger_path(&matches, "ledger_path");
+ 
 
     let snapshot_archive_path = value_t!(matches, "snapshot_archive_path", String)
         .ok()
@@ -1673,10 +1682,12 @@ fn main() {
     let wal_recovery_mode = matches
         .value_of("wal_recovery_mode")
         .map(BlockstoreRecoveryMode::from);
+        
     let verbose_level = matches.occurrences_of("verbose");
+    let stringified_credential = value_t!(matches, "stringified_google_credential", String).ok();
 
     if let ("bigtable", Some(arg_matches)) = matches.subcommand() {
-        bigtable_process_command(&ledger_path, arg_matches)
+        bigtable_process_command(&ledger_path, stringified_credential, arg_matches)
     } else {
         let ledger_path = canonicalize_ledger_path(&ledger_path);
 

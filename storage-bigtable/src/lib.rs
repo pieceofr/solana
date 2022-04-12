@@ -1,7 +1,6 @@
 #![allow(clippy::integer_arithmetic)]
 use {
     crate::bigtable::RowKey,
-    crate::access_token::CredentialInput,
     log::*,
     serde::{Deserialize, Serialize},
     solana_metrics::inc_new_counter_debug,
@@ -363,6 +362,26 @@ impl From<LegacyTransactionByAddrInfo> for TransactionByAddrInfo {
     }
 }
 
+#[derive(Debug)]
+pub enum CredentialInputType {
+    CredentialFilepath,
+    StringifiedCredential,
+}
+// Default 
+// (input_type: CredentialFilepath and string_value: None)
+// Use a user provided credential file-path 
+// (input_type: CredentialFilepath and string_value: gc credential file-path)
+// Use stringified google credential 
+// (input_type: StringifiedCredential  string_value: input string)
+// Error Input
+// (input_type: StringifiedCredential  string_value: None)
+
+#[derive(Debug)]
+pub struct CredentialInput {
+    pub input_type: CredentialInputType,
+    pub string_value: Option<String>,
+}
+
 pub const DEFAULT_INSTANCE_NAME: &str = "solana-ledger";
 
 #[derive(Debug)]
@@ -378,7 +397,10 @@ impl Default for LedgerStorageConfig {
         Self {
             read_only: true,
             timeout: None,
-            credential: None,
+            credential: Some(CredentialInput{
+                input_type: CredentialInputType::CredentialFilepath,
+                string_value: None
+            }),
             instance_name: DEFAULT_INSTANCE_NAME.to_string(),
         }
     }
@@ -393,7 +415,7 @@ impl LedgerStorage {
     pub async fn new(
         read_only: bool,
         timeout: Option<std::time::Duration>,
-        credential_path: Option<String>,
+        credential: Option<CredentialInput>,
     ) -> Result<Self> {
         Self::new_with_config(LedgerStorageConfig {
             read_only,
@@ -416,7 +438,7 @@ impl LedgerStorage {
             instance_name.as_str(),
             read_only,
             timeout,
-            credential_path,
+            credential,
         )
         .await?;
         Ok(Self { connection })

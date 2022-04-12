@@ -37,6 +37,7 @@ use {
         native_token::lamports_to_sol, pubkey::Pubkey,
     },
     solana_send_transaction_service::send_transaction_service::{self, SendTransactionService},
+    solana_storage_bigtable::{CredentialInput, CredentialInputType},
     std::{
         collections::HashSet,
         net::SocketAddr,
@@ -382,10 +383,14 @@ impl JsonRpcService {
                 timeout,
             }) = config.rpc_bigtable_config
             {
+                // TODO: stringified credential is not supported
                 let bigtable_config = solana_storage_bigtable::LedgerStorageConfig {
                     read_only: !enable_bigtable_ledger_upload,
                     timeout,
-                    credential_path: None,
+                    credential: Some( CredentialInput {
+                        input_type: CredentialInputType::CredentialFilepath,
+                        string_value:None,
+                    }),
                     instance_name: bigtable_instance_name.clone(),
                 };
                 runtime

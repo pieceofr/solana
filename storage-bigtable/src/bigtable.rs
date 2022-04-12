@@ -5,6 +5,7 @@ use {
         access_token::{AccessToken, Scope},
         compression::{compress_best, decompress},
         root_ca_certificate,
+        CredentialInput,
     },
     backoff::{future::retry, ExponentialBackoff},
     log::*,

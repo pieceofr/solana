@@ -1,4 +1,5 @@
 pub use goauth::scopes::Scope;
+use crate::{CredentialInput, CredentialInputType};
 /// A module for managing a Google API access token
 use {
     goauth::{
@@ -16,16 +17,6 @@ use {
     },
 };
 
-pub enum CredentialInputType {
-    CredentialFilepath,
-    StringifiedCredential,
-}
-
-#[derive(Debug)]
-pub struct CredentialInput {
-    input_type: CredentialInputType,
-    string_value: Option<String>,
-}
 fn load_credentials(filepath: Option<String>) -> Result<Credentials, String> {
     let path = match filepath {
         Some(f) => f,
@@ -81,7 +72,7 @@ impl AccessToken {
                     load_stringified_credentials(c.string_value)?
                 }
             },
-            None => return Err(format!("{}", "no GCP credential provided")),
+            None => load_credentials(None)?,
         };
 
         if let Err(err) = credentials.rsa_key() {

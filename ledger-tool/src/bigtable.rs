@@ -16,6 +16,7 @@ use {
     },
     solana_ledger::{blockstore::Blockstore, blockstore_db::AccessType},
     solana_sdk::{clock::Slot, pubkey::Pubkey, signature::Signature},
+    solana_storage_bigtable::{CredentialInput, CredentialInputType},
     solana_transaction_status::{
         BlockEncodingOptions, ConfirmedBlock, EncodeError, TransactionDetails,
         UiTransactionEncoding,
@@ -547,11 +548,21 @@ impl BigTableSubCommand for App<'_, '_> {
     }
 }
 
-pub fn bigtable_process_command(ledger_path: &Path, matches: &ArgMatches<'_>) {
+pub fn bigtable_process_command(ledger_path: &Path, stringified_credential: Option<String>, matches: &ArgMatches<'_>) {
     let runtime = tokio::runtime::Runtime::new().unwrap();
 
     let verbose = matches.is_present("verbose");
     let output_format = OutputFormat::from_matches(matches, "output_format", verbose);
+    let credential = match stringified_credential {
+        Some(s) => CredentialInput{
+            input_type: CredentialInputType::StringifiedCredential,
+            string_value: Some(s),
+        },
+        None => CredentialInput{
+            input_type: CredentialInputType::CredentialFilepath,
+            string_value: None,
+        },
+    };
 
     // this is kinda stupid, but there seems to be a bug in clap when a subcommand
     // arg is marked both `global(true)` and `default_value("default_value")`.
@@ -587,6 +598,7 @@ pub fn bigtable_process_command(ledger_path: &Path, matches: &ArgMatches<'_>) {
             let config = solana_storage_bigtable::LedgerStorageConfig {
                 read_only: false,
                 instance_name,
+                credential: Some(credential),
                 ..solana_storage_bigtable::LedgerStorageConfig::default()
             };
             runtime.block_on(upload(
@@ -602,6 +614,7 @@ pub fn bigtable_process_command(ledger_path: &Path, matches: &ArgMatches<'_>) {
             let config = solana_storage_bigtable::LedgerStorageConfig {
                 read_only: !arg_matches.is_present("force"),
                 instance_name,
+                credential: Some(credential),
                 ..solana_storage_bigtable::LedgerStorageConfig::default()
             };
             runtime.block_on(delete_slots(slots, config))
@@ -610,6 +623,7 @@ pub fn bigtable_process_command(ledger_path: &Path, matches: &ArgMatches<'_>) {
             let config = solana_storage_bigtable::LedgerStorageConfig {
                 read_only: true,
                 instance_name,
+                credential: Some(credential),
                 ..solana_storage_bigtable::LedgerStorageConfig::default()
             };
             runtime.block_on(first_available_block(config))
@@ -619,6 +633,7 @@ pub fn bigtable_process_command(ledger_path: &Path, matches: &ArgMatches<'_>) {
             let config = solana_storage_bigtable::LedgerStorageConfig {
                 read_only: false,
                 instance_name,
+                credential: Some(credential),
                 ..solana_storage_bigtable::LedgerStorageConfig::default()
             };
             runtime.block_on(block(slot, output_format, config))
@@ -629,6 +644,7 @@ pub fn bigtable_process_command(ledger_path: &Path, matches: &ArgMatches<'_>) {
             let config = solana_storage_bigtable::LedgerStorageConfig {
                 read_only: false,
                 instance_name,
+                credential: Some(credential),
                 ..solana_storage_bigtable::LedgerStorageConfig::default()
             };
 
@@ -647,11 +663,16 @@ pub fn bigtable_process_command(ledger_path: &Path, matches: &ArgMatches<'_>) {
                 "reference_credential",
                 String
             ));
+            let reference_credential= CredentialInput{
+                input_type: CredentialInputType::CredentialFilepath,
+                string_value: credential_path,
+            };
+            
             let ref_instance_name =
                 value_t_or_exit!(arg_matches, "reference_instance_name", String);
             let ref_config = solana_storage_bigtable::LedgerStorageConfig {
                 read_only: false,
-                credential_path,
+                credential: Some(reference_credential),
                 instance_name: ref_instance_name,
                 ..solana_storage_bigtable::LedgerStorageConfig::default()
             };
@@ -667,6 +688,7 @@ pub fn bigtable_process_command(ledger_path: &Path, matches: &ArgMatches<'_>) {
             let config = solana_storage_bigtable::LedgerStorageConfig {
                 read_only: false,
                 instance_name,
+                credential: Some(credential),
                 ..solana_storage_bigtable::LedgerStorageConfig::default()
             };
 
@@ -686,6 +708,7 @@ pub fn bigtable_process_command(ledger_path: &Path, matches: &ArgMatches<'_>) {
             let config = solana_storage_bigtable::LedgerStorageConfig {
                 read_only: true,
                 instance_name,
+                credential: Some(credential),
                 ..solana_storage_bigtable::LedgerStorageConfig::default()
             };
 
