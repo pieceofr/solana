@@ -5,6 +5,7 @@ use {
     goauth::{
         auth::{JwtClaims, Token},
         credentials::Credentials,
+        // credentials::FromStr,
     },
     log::*,
     smpl_jwt::Jwt,
@@ -14,6 +15,7 @@ use {
             {Arc, RwLock},
         },
         time::Instant,
+        str::FromStr,
     },
 };
 
@@ -28,15 +30,14 @@ fn load_credentials(filepath: Option<String>) -> Result<Credentials, String> {
         .map_err(|err| format!("Failed to read GCP credentials from {}: {}", path, err))
 }
 
-fn load_stringified_credentials(filepath: Option<String>) -> Result<Credentials, String> {
-    let path = match filepath {
-        Some(f) => f,
-        None => std::env::var("GOOGLE_APPLICATION_CREDENTIALS").map_err(|_| {
-            "GOOGLE_APPLICATION_CREDENTIALS environment variable not found".to_string()
-        })?,
-    };
-    Credentials::from_file(&path)
-        .map_err(|err| format!("Failed to read GCP credentials from {}: {}", path, err))
+fn load_stringified_credentials(credential: Option<String>) -> Result<Credentials, String> {
+   match credential {
+       Some(s) => match Credentials::FromStr(s.as_str()) {
+            Some(c) => c, 
+            Err(gErr) => Err(format!("{}",gErr)),
+       },
+       None => Err(format!("stringified credential is not provide")),
+   }
 }
 
 #[derive(Clone)]
@@ -68,9 +69,8 @@ impl AccessToken {
         let credentials = match credential {
             Some(c) => match c.input_type {
                 CredentialInputType::CredentialFilepath => load_credentials(c.string_value)?,
-                CredentialInputType::StringifiedCredential => {
-                    load_stringified_credentials(c.string_value)?
-                }
+                // CredentialInputType::StringifiedCredential => load_stringified_credentials(c.string_value)?,
+                CredentialInputType::StringifiedCredential => load_credentials(c.string_value)?,
             },
             None => load_credentials(None)?,
         };
