@@ -69,8 +69,8 @@ impl AccessToken {
         let credentials = match credential {
             Some(c) => match c.input_type {
                 CredentialInputType::CredentialFilepath => load_credentials(c.string_value)?,
-                // CredentialInputType::StringifiedCredential => load_stringified_credentials(c.string_value)?,
-                CredentialInputType::StringifiedCredential => load_credentials(c.string_value)?,
+                CredentialInputType::StringifiedCredential => load_stringified_credentials(c.string_value)?,
+                // CredentialInputType::StringifiedCredential => load_credentials(c.string_value)?,
             },
             None => load_credentials(None)?,
         };
