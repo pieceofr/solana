@@ -31,13 +31,10 @@ fn load_credentials(filepath: Option<String>) -> Result<Credentials, String> {
 }
 
 fn load_stringified_credentials(credential: Option<String>) -> Result<Credentials, String> {
-   match credential {
-       Some(s) => match Credentials::FromStr(s.as_str()) {
-            Some(c) => c, 
-            Err(gErr) => Err(format!("{}",gErr)),
-       },
-       None => Err(format!("stringified credential is not provide")),
-   }
+    match credential {
+        Some(s) => Credentials::from_str(&s).map_err(|err| format!("{}", err)),
+        None => Err(format!("stringified credential is not provide")),
+    }
 }
 
 #[derive(Clone)]
