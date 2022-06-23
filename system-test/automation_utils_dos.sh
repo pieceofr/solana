@@ -128,7 +128,7 @@ function get_validator_confirmation_time {
 function collect_performance_statistics {
   execution_step "Collect performance statistics about run"
   AFT_TIME=$(echo `date -u +%s`)
-  BEF_TIME=$(echo ${AFT_TIME} - ${$TEST_DURATION_SECONDS} | bc)
+  BEF_TIME=$(echo ${AFT_TIME} - ${TEST_DURATION_SECONDS} | bc)
   declare q_mean_tx_count='
     SELECT MEAN(mean_count) FROM (SELECT round(mean("count")) AS "mean_count"
       FROM "'$TESTNET_TAG'"."autogen"."validator-confirmation"
@@ -139,18 +139,9 @@ function collect_performance_statistics {
     --data-urlencode "db=${TESTNET_TAG}" \
     --data-urlencode "q=$q_mean_tx_count;" |
     python3 "${REPO_ROOT}"/system-test/testnet-automation-json-parser.py >>"$RESULT_FILE"
-    
-  declare q_dropped_vote_hash_count='
-    SELECT sum("count") as "sum_dropped_vote_hash"
-      FROM "'$TESTNET_TAG'"."autogen"."dropped-vote-hash"
-      WHERE time > now() - '"$TEST_DURATION_SECONDS"'s'
 
-  # store in variable to be returned
-  dropped_vote_hash_count=$( \
-  curl -G "${INFLUX_HOST}/query?u=ro&p=topsecret" \
-    --data-urlencode "db=${TESTNET_TAG}" \
-    --data-urlencode "q=$q_dropped_vote_hash_count" |
-    python3 "${REPO_ROOT}"/system-test/testnet-automation-json-parser-missing.py)
+  cat $RESULT_FILE
+  
 }
 
 function upload_results_to_slack() {
