@@ -5,7 +5,7 @@ steps:
       UPLOAD_RESULTS_TO_SLACK: "true"
       CLOUD_PROVIDER: "gce"
       TESTNET_TAG: "gce-perf-cpu-only"
-      TEST_DURATION_SECONDS: 600
+      TEST_DURATION_SECONDS: 300
       NUMBER_OF_VALIDATOR_NODES: 1
       ENABLE_GPU: "false"
       VALIDATOR_NODE_MACHINE_TYPE: "--machine-type n1-standard-16"
