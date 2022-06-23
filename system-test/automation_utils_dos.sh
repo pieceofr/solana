@@ -131,13 +131,19 @@ function collect_performance_statistics {
   BEF_TIME=$(echo ${AFT_TIME} - ${TEST_DURATION_SECONDS} | bc)
   declare q_mean_tx_count='
     SELECT MEAN(mean_count) FROM (SELECT round(mean("count")) AS "mean_count"
-      FROM "'$TESTNET_TAG'"."autogen"."validator-confirmation"
+      FROM "'$TESTNET_TAG'"."autogen"."bank-process_transactions"
       WHERE time > '"$BEF_TIME"'s  AND  time < '"$AFT_TIME"'s'
 
+  echo "-----q_mean_tx_count $q_mean_tx_count"
+
+declare q_max_tx_count='
+    SELECT MAX(max_count) FROM (SELECT round(max("count")) AS "max_count"
+      FROM "'$TESTNET_TAG'"."autogen"."bank-process_transactions"
+      WHERE time > '"$BEF_TIME"'s  AND  time < '"$AFT_TIME"'s'
 
   curl -G "${INFLUX_HOST}/query?u=ro&p=topsecret" \
     --data-urlencode "db=${TESTNET_TAG}" \
-    --data-urlencode "q=$q_mean_tx_count;" |
+    --data-urlencode "q=$q_mean_tx_count;$q_max_tx_count" |
     python3 "${REPO_ROOT}"/system-test/testnet-automation-json-parser.py >>"$RESULT_FILE"
 
   cat $RESULT_FILE
