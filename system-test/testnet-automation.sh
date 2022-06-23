@@ -3,7 +3,7 @@ set -e
 
 # shellcheck disable=SC1090
 # shellcheck disable=SC1091
-source "$(dirname "$0")"/automation_utils.sh
+source "$(dirname "$0")"/automation_utils_dos.sh
 
 function cleanup_testnet {
   RC=$?
