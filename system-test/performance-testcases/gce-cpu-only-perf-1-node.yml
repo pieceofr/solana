@@ -10,7 +10,7 @@ steps:
       ENABLE_GPU: "false"
       VALIDATOR_NODE_MACHINE_TYPE: "--machine-type n1-standard-16"
       NUMBER_OF_CLIENT_NODES: 1
-      CLIENT_OPTIONS: "--use-tpu-client --sustained --tpu-use-quic  --duration 180 --tx_count 500"
+      CLIENT_OPTIONS: "bench-tps=1=--sustained --tpu-use-quic  --duration 180 --tx_count 500"
       TESTNET_ZONES: "us-west1-a,us-west1-b,us-central1-a,europe-west4-a"
       USE_PUBLIC_IP_ADDRESSES: "false"
       ADDITIONAL_FLAGS: "--dedicated"

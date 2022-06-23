@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -ex
 
 # shellcheck disable=SC1090
 # shellcheck disable=SC1091
